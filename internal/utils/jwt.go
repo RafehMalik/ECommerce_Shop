@@ -8,17 +8,20 @@ import (
 	"github.com/golang-jwt/jwt/v5"
 )
 
+// Claims contains the data for the user
 type Claims struct {
-	UserId uint   `json:"user_id"`
+	UserID uint   `json:"user_id"`
 	Email  string `json:"email"`
 	Role   string `json:"role"`
 	jwt.RegisteredClaims
 }
 
-func GenerateToken(userId uint, email, role string, cfg *config.JWTConfig) (accessToken, refreshToken string, err error) {
-	//AccessToken
+// GenerateTokenPair generates access and refresh token
+func GenerateTokenPair(cfg *config.JWTConfig, userID uint, email, role string) (accessToken, refreshToken string, err error) {
+
+	// Access token
 	accessClaims := &Claims{
-		UserId: userId,
+		UserID: userID,
 		Email:  email,
 		Role:   role,
 		RegisteredClaims: jwt.RegisteredClaims{
@@ -26,14 +29,16 @@ func GenerateToken(userId uint, email, role string, cfg *config.JWTConfig) (acce
 			IssuedAt:  jwt.NewNumericDate(time.Now()),
 		},
 	}
+
 	at := jwt.NewWithClaims(jwt.SigningMethodHS256, accessClaims)
 	accessTokenString, err := at.SignedString([]byte(cfg.Secret))
 	if err != nil {
 		return "", "", err
 	}
 
+	// Refresh token
 	refreshClaims := &Claims{
-		UserId: userId,
+		UserID: userID,
 		Email:  email,
 		Role:   role,
 		RegisteredClaims: jwt.RegisteredClaims{
@@ -46,17 +51,20 @@ func GenerateToken(userId uint, email, role string, cfg *config.JWTConfig) (acce
 	if err != nil {
 		return "", "", err
 	}
+
 	return accessTokenString, refreshTokenString, nil
 }
 
-// Validte
-func ValidateTokens(tokenstring, secret string) (*Claims, error) {
-	token, err := jwt.ParseWithClaims(tokenstring, &Claims{}, func(t *jwt.Token) (interface{}, error) {
+// ValidateToken checks if jwt token is valid
+func ValidateToken(tokenString, secret string) (*Claims, error) {
+	token, err := jwt.ParseWithClaims(tokenString, &Claims{}, func(token *jwt.Token) (interface{}, error) {
 		return []byte(secret), nil
 	})
+
 	if err != nil {
 		return nil, err
 	}
+
 	if claims, ok := token.Claims.(*Claims); ok && token.Valid {
 		return claims, nil
 	}

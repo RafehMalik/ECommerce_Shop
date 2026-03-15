@@ -27,8 +27,8 @@ func NewAuthService(db *gorm.DB, confi *config.Config) *AuthService {
 func (s *AuthService) Register(req *dto.RegisterRequest) (*dto.AuthResponse, error) {
 	var existingUser models.User
 	err := s.db.Where("email=?", req.Email).First(&existingUser).Error
-	if err != nil {
-		return nil, errors.New("user not found")
+	if err == nil {
+		return nil, errors.New("cannot login with this email")
 	}
 	hashPassword, err := utils.HashPassword(req.Password)
 	if err != nil {
@@ -43,14 +43,14 @@ func (s *AuthService) Register(req *dto.RegisterRequest) (*dto.AuthResponse, err
 		Phone:     req.Phone,
 		Role:      models.UserRoleCustomer,
 	}
-	err = s.db.Create(user).Error
+	err = s.db.Create(&user).Error
 	if err != nil {
 		return nil, err
 	}
 	cart := models.Cart{
 		UserID: user.ID,
 	}
-	err = s.db.Create(cart).Error
+	err = s.db.Create(&cart).Error
 	if err != nil {
 		fmt.Println("unalbe to create cart")
 	}

@@ -63,5 +63,5 @@ func (s *Server) logout(c *gin.Context) {
 		utils.BadRequestResponse(c, "invalid request", err)
 		return
 	}
-	utils.CreatedResponse(c, "login successfull", nil)
+	utils.CreatedResponse(c, "logout successfull", nil)
 }

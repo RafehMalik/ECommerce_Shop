@@ -32,7 +32,6 @@ func (s *Server) SetupRoutes() *gin.Engine {
 	router.GET("/health", s.healthcheck)
 
 	api := router.Group("/api/v1")
-
 	auth := api.Group("/auth")
 	{
 		auth.POST("/register", s.register)

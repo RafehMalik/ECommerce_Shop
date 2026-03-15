@@ -26,7 +26,7 @@ func NewAuthService(db *gorm.DB, confi *config.Config) *AuthService {
 
 func (s *AuthService) Register(req *dto.RegisterRequest) (*dto.AuthResponse, error) {
 	var existingUser models.User
-	err := s.db.Where("email=?", req.Email).First(existingUser).Error
+	err := s.db.Where("email=?", req.Email).First(&existingUser).Error
 	if err != nil {
 		return nil, errors.New("user not found")
 	}
@@ -58,7 +58,7 @@ func (s *AuthService) Register(req *dto.RegisterRequest) (*dto.AuthResponse, err
 	return s.generateAuthResponse(&user)
 }
 
-func (s *AuthService) login(req *dto.LoginRequest) (*dto.AuthResponse, error) {
+func (s *AuthService) Login(req *dto.LoginRequest) (*dto.AuthResponse, error) {
 	var user models.User
 	err := s.db.Where("email=? and is_active=?", req.Email, true).First(&user).Error
 	if err != nil {
@@ -77,7 +77,7 @@ func (s *AuthService) RefreshToken(req *dto.RefreshTokenRequest) (*dto.AuthRespo
 		return nil, err
 	}
 	var refreshToken models.RefreshToken
-	err = s.db.Where("token=? And expires_at=?", req.RefreshToken, time.Now()).First(&refreshToken).Error
+	err = s.db.Where("token=? And expires_at>?", req.RefreshToken, time.Now()).First(&refreshToken).Error
 	if err != nil {
 		return nil, errors.New("toen not exst")
 	}
@@ -90,7 +90,7 @@ func (s *AuthService) RefreshToken(req *dto.RefreshTokenRequest) (*dto.AuthRespo
 	return s.generateAuthResponse(&user)
 }
 
-func (s *AuthService) logout(refreshToken string) error {
+func (s *AuthService) Logout(refreshToken string) error {
 
 	return s.db.Where("token=?", refreshToken).Delete(&models.RefreshToken{}).Error
 }
@@ -109,7 +109,7 @@ func (s *AuthService) generateAuthResponse(user *models.User) (*dto.AuthResponse
 		Token:     refreshToen,
 		ExpiresAt: time.Now().Add(s.config.JWT.RefreshTokenExpires),
 	}
-	s.db.Create(refreshToenmodel)
+	s.db.Create(&refreshToenmodel)
 	return &dto.AuthResponse{
 		User: dto.UserResponse{
 			ID:        user.ID,

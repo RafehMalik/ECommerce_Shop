@@ -51,6 +51,7 @@ func (s *Server) refreshToken(c *gin.Context) {
 	}
 	utils.CreatedResponse(c, "login successfull", response)
 }
+
 func (s *Server) logout(c *gin.Context) {
 	var req dto.RefreshTokenRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
@@ -64,4 +65,33 @@ func (s *Server) logout(c *gin.Context) {
 		return
 	}
 	utils.CreatedResponse(c, "logout successfull", nil)
+}
+
+func (s *Server) GetProfile(c *gin.Context) {
+	userID := c.GetUint("user_id")
+	userService := services.NewUserService(s.db)
+	profile, err := userService.GetProfile(userID)
+	if err != nil {
+		utils.NotFoundResponse(c, "record not found")
+		return
+	}
+	utils.SuccessResponse(c, "retreived succesfully", profile)
+}
+
+func (s *Server) UpdateProfile(c *gin.Context) {
+	userID := c.GetUint("user_id")
+
+	var req dto.UpdateProfileRequest
+	if err := c.ShouldBindJSON(&req); err != nil {
+		utils.BadRequestResponse(c, "invalid data", err)
+		return
+	}
+
+	userService := services.NewUserService(s.db)
+	profile, err := userService.UpdateProfle(userID, &req)
+	if err != nil {
+		utils.BadRequestResponse(c, "failed to update data", err)
+		return
+	}
+	utils.SuccessResponse(c, "updatd successfuly", profile)
 }

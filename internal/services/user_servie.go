@@ -14,7 +14,7 @@ func NewUserService(db *gorm.DB) *UserService {
 	return &UserService{db: db}
 }
 
-func (s *UserService) GetProfile(userID int) (*dto.UserResponse, error) {
+func (s *UserService) GetProfile(userID uint) (*dto.UserResponse, error) {
 	var user models.User
 	if err := s.db.First(&user, userID).Error; err != nil {
 		return nil, err
@@ -27,4 +27,21 @@ func (s *UserService) GetProfile(userID int) (*dto.UserResponse, error) {
 		Role:     string(user.Role),
 		IsActive: user.IsActive,
 	}, nil
+}
+
+func (s *UserService) UpdateProfle(userID uint, req *dto.UpdateProfileRequest) (*dto.UserResponse, error) {
+	var user models.User
+	err := s.db.First(&user, userID).Error
+	if err != nil {
+		return nil, err
+	}
+
+	user.FirstName = req.FirstName
+	user.LastName = req.LastName
+	user.Phone = req.Phone
+
+	if err := s.db.Save(&user).Error; err != nil {
+		return nil, err
+	}
+	return s.GetProfile(userID)
 }

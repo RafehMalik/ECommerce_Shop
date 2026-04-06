@@ -1,0 +1,149 @@
+package server
+
+import (
+	"strconv"
+
+	"github.com/RafehMalik/learning-go-shop/internal/dto"
+	"github.com/RafehMalik/learning-go-shop/internal/services"
+	"github.com/RafehMalik/learning-go-shop/internal/utils"
+	"github.com/gin-gonic/gin"
+)
+
+func (s *Server) CreateCategory(c *gin.Context) {
+	var req dto.CreateCategoryRequest
+	if err := c.ShouldBindJSON(&req); err != nil {
+		utils.BadRequestResponse(c, "invalid request", err)
+		return
+	}
+	productServise := services.NewProductService(s.db)
+	category, err := productServise.CreateCateory(&req)
+	if err != nil {
+		utils.InternalServerErrorResponse(c, "failed to create", err)
+		return
+	}
+	utils.SuccessResponse(c, "created successfully", category)
+}
+
+func (s *Server) GetCategory(c *gin.Context) {
+	productService := services.NewProductService(s.db)
+	category, err := productService.GetCategory()
+	if err != nil {
+		utils.InternalServerErrorResponse(c, "failed to get", err)
+		return
+	}
+	utils.SuccessResponse(c, "retrieved succefully", category)
+}
+
+func (s *Server) UpdateCategory(c *gin.Context) {
+	id, err := strconv.ParseUint(c.Param("id"), 10, 32)
+	if err != nil {
+		utils.BadRequestResponse(c, "invalid category id", err)
+		return
+	}
+	var req dto.UpdateCategoryRequest
+	if err := c.ShouldBindJSON(&req); err != nil {
+		utils.BadRequestResponse(c, "invalid request", err)
+		return
+	}
+	productService := services.NewProductService(s.db)
+	category, err := productService.UpdateCategory(uint(id), &req)
+	if err != nil {
+		utils.InternalServerErrorResponse(c, "failed to update", err)
+		return
+	}
+	utils.SuccessResponse(c, "succefully updated", category)
+}
+
+func (s *Server) DeleteCategory(c *gin.Context) {
+	id, err := strconv.ParseUint(c.Param("id"), 10, 32)
+	if err != nil {
+		utils.BadRequestResponse(c, "invalid category id", err)
+		return
+	}
+	productService := services.NewProductService(s.db)
+	err = productService.DeleteCategory(int(id))
+	if err != nil {
+		utils.InternalServerErrorResponse(c, "failed to delete", err)
+		return
+	}
+	utils.SuccessResponse(c, "deleted succesfully", nil)
+}
+
+func (s *Server) CreateProduct(c *gin.Context) {
+	var req dto.CreateProductRequest
+	if err := c.ShouldBindJSON(&req); err != nil {
+		utils.BadRequestResponse(c, "invalid request", err)
+		return
+	}
+	productService := services.NewProductService(s.db)
+	product, err := productService.CreateProduct(&req)
+	if err != nil {
+		utils.InternalServerErrorResponse(c, "failed to create", err)
+		return
+	}
+	utils.SuccessResponse(c, "created successfully", product)
+}
+
+func (s *Server) GetProduct(c *gin.Context) {
+	id, err := strconv.ParseUint(c.Param("id"), 10, 32)
+	if err != nil {
+		utils.BadRequestResponse(c, "invalid product id", err)
+		return
+	}
+	productService := services.NewProductService(s.db)
+	category, err := productService.GetProduct(uint(id))
+	if err != nil {
+		utils.NotFoundResponse(c, "product not found")
+		return
+	}
+	utils.SuccessResponse(c, "retrieved succefully", category)
+}
+
+func (s *Server) GetProducts(c *gin.Context) {
+	page, _ := strconv.Atoi(c.DefaultQuery("page", "1"))
+	limit, _ := strconv.Atoi(c.DefaultQuery("limit", "10"))
+
+	productService := services.NewProductService(s.db)
+	category, meta, err := productService.GetProducts(page, limit)
+	if err != nil {
+		utils.InternalServerErrorResponse(c, "failed to get", err)
+		return
+	}
+	utils.PaginatedSuccessResponse(c, "retrieved succefully", category, *meta)
+}
+
+func (s *Server) UpdateProduct(c *gin.Context) {
+	id, err := strconv.ParseUint(c.Param("id"), 10, 32)
+	if err != nil {
+		utils.BadRequestResponse(c, "Invalid product ID", err)
+		return
+	}
+
+	var req dto.UpdateProductRequest
+	if err := c.ShouldBindJSON(&req); err != nil {
+		utils.BadRequestResponse(c, "Invalid request data", err)
+		return
+	}
+	productService := services.NewProductService(s.db)
+	product, err := productService.UpdateProduct(uint(id), &req)
+	if err != nil {
+		utils.InternalServerErrorResponse(c, "Failed to update product", err)
+		return
+	}
+	utils.SuccessResponse(c, "Product updated successfully", product)
+}
+
+func (s *Server) DeleteProduct(c *gin.Context) {
+	id, err := strconv.ParseUint(c.Param("id"), 10, 32)
+	if err != nil {
+		utils.BadRequestResponse(c, "Invalid product ID", err)
+		return
+	}
+	productService := services.NewProductService(s.db)
+	if err := productService.DeleteProduct(uint(id)); err != nil {
+		utils.InternalServerErrorResponse(c, "Failed to delete product", err)
+		return
+	}
+
+	utils.SuccessResponse(c, "Product deleted successfully", nil)
+}

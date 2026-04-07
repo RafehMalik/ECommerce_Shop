@@ -17,9 +17,10 @@ type Server struct {
 	authService    *services.AuthService
 	productService *services.ProductService
 	userService    *services.UserService
+	uploadService  *services.UploadService
 }
 
-func New(cfg *config.Config, db *gorm.DB, logger zerolog.Logger, authService *services.AuthService, productService *services.ProductService, userService *services.UserService) *Server {
+func New(cfg *config.Config, db *gorm.DB, logger zerolog.Logger, authService *services.AuthService, productService *services.ProductService, userService *services.UserService, uploadService *services.UploadService) *Server {
 	return &Server{
 		config:         cfg,
 		db:             db,
@@ -27,6 +28,7 @@ func New(cfg *config.Config, db *gorm.DB, logger zerolog.Logger, authService *se
 		authService:    authService,
 		productService: productService,
 		userService:    userService,
+		uploadService:  uploadService,
 	}
 }
 
@@ -37,6 +39,8 @@ func (s *Server) SetupRoutes() *gin.Engine {
 	router.Use(s.corsMiddlewares())
 
 	router.GET("/health", s.healthcheck)
+
+	router.Static("/uploads", "./uploads")
 
 	api := router.Group("/api/v1")
 	auth := api.Group("/auth")
@@ -71,6 +75,7 @@ func (s *Server) SetupRoutes() *gin.Engine {
 				productRoutes.POST("/", s.adminMiddleware(), s.CreateProduct)
 				productRoutes.PUT("/:id", s.adminMiddleware(), s.UpdateProduct)
 				productRoutes.DELETE("/:id", s.adminMiddleware(), s.DeleteProduct)
+				productRoutes.POST("/:id/images", s.adminMiddleware(), s.uploadProductImage)
 
 			}
 		}

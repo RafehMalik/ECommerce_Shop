@@ -86,7 +86,7 @@ func (s *ProductService) CreateProduct(req *dto.CreateProductRequest) (*dto.Prod
 		SKU:         req.SKU,
 	}
 
-	err := s.db.Create(prduct).Error
+	err := s.db.Create(&prduct).Error
 	if err != nil {
 		return nil, err
 	}

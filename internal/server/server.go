@@ -18,9 +18,11 @@ type Server struct {
 	productService *services.ProductService
 	userService    *services.UserService
 	uploadService  *services.UploadService
+	cartService    *services.CartService
+	orderService   *services.OrderService
 }
 
-func New(cfg *config.Config, db *gorm.DB, logger zerolog.Logger, authService *services.AuthService, productService *services.ProductService, userService *services.UserService, uploadService *services.UploadService) *Server {
+func New(cfg *config.Config, db *gorm.DB, logger zerolog.Logger, authService *services.AuthService, productService *services.ProductService, userService *services.UserService, uploadService *services.UploadService, cartService *services.CartService, orderService *services.OrderService) *Server {
 	return &Server{
 		config:         cfg,
 		db:             db,
@@ -29,6 +31,8 @@ func New(cfg *config.Config, db *gorm.DB, logger zerolog.Logger, authService *se
 		productService: productService,
 		userService:    userService,
 		uploadService:  uploadService,
+		cartService:    cartService,
+		orderService:   orderService,
 	}
 }
 
@@ -76,6 +80,25 @@ func (s *Server) SetupRoutes() *gin.Engine {
 				productRoutes.PUT("/:id", s.adminMiddleware(), s.UpdateProduct)
 				productRoutes.DELETE("/:id", s.adminMiddleware(), s.DeleteProduct)
 				productRoutes.POST("/:id/images", s.adminMiddleware(), s.uploadProductImage)
+
+			}
+
+			// cart routes
+			cart := protected.Group("/cart")
+			{
+				cartRoutes := cart
+				cartRoutes.GET("/", s.getCart)
+				cartRoutes.POST("/items", s.addToCart)
+				cartRoutes.PUT("/items/:id", s.updateCartItem)
+				cartRoutes.DELETE("/items/:id", s.removeFromCart)
+			}
+
+			order := protected.Group("/orders")
+			{
+				orderRoutes := order
+				orderRoutes.GET("/", s.GetOrders)
+				orderRoutes.GET("/:id", s.GetOrder)
+				orderRoutes.POST("/", s.CreateOrder)
 
 			}
 		}
